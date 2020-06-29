@@ -9,13 +9,12 @@ library(openxlsx)
 
 ###load dataset
 setwd("C:/Users/Christopher Murray/Documents/GitHub/Fish-Ecophysiology/Heatwave Analysis")
-data = read_xlsx("PadillaBay_EnviromentalConditions_2002-2020.xlsx")
+data = read_xlsx("PadBay.xlsx")
 
-#data = Mumford_Cove_2015_2020
 data$t<- convertToDate(data$t)
 
 ###Detect events
-ts = ts2clm(data, climatologyPeriod = c("2015-4-14","2020-2-4"), pctile = 90)
+ts = ts2clm(data, climatologyPeriod = c("2002-1-01","2019-12-31"), pctile = 90)
 mhw = detect_event(ts)
 # View just a few metrics
 mhw$event %>%
@@ -27,9 +26,10 @@ mhw$event %>%
 mhw = lolli_plot(mhw, metric = "intensity_max")
 mhw
 
+write.csv(mhw$data, file = "Padilla Bay Heatwave Events 2002-2019.csv")
 
 
-###Detect acidification events
+##Detect acidification events
 ts_10th = ts2clm(data, climatologyPeriod = c("2015-4-14","2020-2-4"), pctile = 10)
 mcs <- detect_event(ts_10th, coldSpells = TRUE)
 # View just a few metrics
