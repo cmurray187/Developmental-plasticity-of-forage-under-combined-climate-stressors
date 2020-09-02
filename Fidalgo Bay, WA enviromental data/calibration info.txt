@@ -1,0 +1,13 @@
+Probe model: Eureka Mants+ 20 Multiprobe
+
+Sensors: temperature, pH, conductivity, optical dissolved oxygen
+
+Calibrations
+
+Temperature: Manufacturers calibration.
+
+Conductivity: Two-point calibration with zero-point set automatically, second point measured in Fisherbrand™ Traceable™ Conductivity Calibration Standards Certified Reference Material (CRM), NIST tested. 
+
+pH: Two-point calibration on the total scale; two seawater samples (17.5°C) were prepared with pHT 7.04 and 8.07 which were verified immediately before calibration by diode array spectrophotometer (Agilent 8453A UV-VIS). Calibration standards were prepared from filtered (to 0.3 µm) seawater (32.25 psu) by injecting or degassing dissolved CO2. 
+
+Dissolved oxygen: One-point calibration using 100% water-saturated air with automatic salinity correction. 
