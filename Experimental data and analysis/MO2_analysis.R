@@ -7,13 +7,14 @@ library(broom)
 library(tidymodels)
 library(nlme)
 library(performance)
+library(car)
 
 ###Source function----
 source("calculate_slopes.R")
 source("run_summary.R")
 source("append_metadata.R")
 source("subtract_blanks.R")
-
+source("subtract_blanks_trial4.R")
 ###Data----
 MO2_metadata <- read_excel("Exp3_embryoMO2_metadata.xlsx", na = "NA")
 MO2_data <- read_excel("Exp3_embryoMO2_data.xlsx", na = "NA")
@@ -22,6 +23,12 @@ MO2_data <- read_excel("Exp3_embryoMO2_data.xlsx", na = "NA")
 df <- as_tibble(MO2_data)%>%
   filter(trial_id == 1)%>%
   filter(run_num > 0)###Subset data if not all runs are wanted
+
+models <- df %>%
+  split(.$tank) %>%
+  map(~lm(DO_umol_L~delta_time_mins, data = .))
+run1.outliers <- models %>%
+  map(~outlierTest(.))
 
 ###Plots
 ggplot(df) +
@@ -67,8 +74,26 @@ MO2slopes_heatwave_6dpf_final <- subtract_blanks(MO2slopes_heatwave_6dpf_meta)
 #set data
 df <- as_tibble(MO2_data)%>%
   filter(trial_id == 2)%>%
-  filter(run_num > 0)###Subset data if not all runs are wanted
+  filter(run_num != 3)###Subset data if not all runs are wanted
 
+models <- df %>%
+  split(.$tank) %>%
+  map(~lm(DO_umol_L~delta_time_mins, data = .))
+run2.outliers <- models %>%
+  map(~outlierTest(.))
+models %>%
+  map(summary) %>% 
+  map_dbl(~.$r.squared)
+residuals <- models %>%
+  map(summary) %>%
+  map_dbl(residuals(.))
+models %>%
+  map(~outlierTest(.))
+resids <- models %>%
+  map(~residuals.lm(.))
+resids <- enframe(resids)
+df.resids <-unnest(resids, cols = c(value))
+ggplot
 ###Plots
 ggplot(df) +
   aes(x=delta_time_mins, y=DO_umol_L) +
@@ -87,10 +112,17 @@ ggplot(df) +
 
 #ggsave("MO2slopes_ambienttemp_6dpf.jpeg", path = "figs", width = 10, height =12, dpi = 1200)
 
+ggplot(df, aes(sample = DO_umol_L))+
+  stat_qq() + stat_qq_line()+
+  facet_wrap(~tank)
+
+
+
 ###Calculate slopes for oxygen change for each replicate and blank
 MO2slopes_ambienttemp_6dpf_fits <- calculate_slopes(df)
-###Note the slopes and fits for each measurement
-#view(MO2slopes_ambienttemp_6dpf)
+
+###Check for outlying measurements in regression
+
 
 ###Create a run summary report
 MO2slopes_ambienttemp_6dpf_runsummary <- run_summary(MO2slopes_ambienttemp_6dpf_fits)
@@ -115,6 +147,12 @@ MO2slopes_ambienttemp_6dpf_final <- subtract_blanks(MO2slopes_ambienttemp_6dpf_m
 df <- as_tibble(MO2_data)%>%
   filter(trial_id == 3)%>%
   filter(run_num > 0)###Subset data if not all runs are wanted
+
+models <- df %>%
+  split(.$tank) %>%
+  map(~lm(DO_umol_L~delta_time_mins, data = .))
+run3.outliers <- models %>%
+  map(~outlierTest(.))
 
 ###Plots
 ggplot(df) +
@@ -161,6 +199,13 @@ MO2slopes_heatwave_7dpf_final <- subtract_blanks(MO2slopes_heatwave_7dpf_meta)
 df <- as_tibble(MO2_data)%>%
   filter(trial_id == 4)%>%
   filter(run_num > 0)###Subset data if not all runs are wanted
+ 
+
+models <- df %>%
+  split(.$tank) %>%
+  map(~lm(DO_umol_L~delta_time_mins, data = .))
+run4.outliers <- models %>%
+  map(~outlierTest(.))
 
 ###Plots
 ggplot(df) +
@@ -196,7 +241,7 @@ MO2slopes_ambienttemp_7dpf_meta <- append_metadata(MO2slopes_ambienttemp_7dpf_fi
 
 ###Next convert MO2 rates to umol/hr, subtract out blank respiration rates, and present MO2 as umol/hr/individual.
 ###Convert MO2rates from umol/L/min to umol/hr using the seawater volume of each vial (total vial volume minus estimated total embryo volume or bead volume for blanks)
-MO2slopes_ambienttemp_7dpf_final <- subtract_blanks(MO2slopes_ambienttemp_7dpf_meta)
+MO2slopes_ambienttemp_7dpf_final <- subtract_blanks_trial4(MO2slopes_ambienttemp_7dpf_meta)
 ###For this trial, blank DO levels actually increased during measurements, so embryo MO2 actually increased by correcting for blanks. 
 #view(MO2slopes_ambienttemp_7dpf_final)
 
@@ -205,6 +250,12 @@ MO2slopes_ambienttemp_7dpf_final <- subtract_blanks(MO2slopes_ambienttemp_7dpf_m
 df <- as_tibble(MO2_data)%>%
   filter(trial_id == 5)%>%
   filter(run_num > 0)###Subset data if not all runs are wanted
+
+models <- df %>%
+  split(.$tank) %>%
+  map(~lm(DO_umol_L~delta_time_mins, data = .))
+run5.outliers <- models %>%
+  map(~outlierTest(.))
 
 ###Plots
 ggplot(df) +
@@ -250,7 +301,13 @@ MO2slopes_heatwave_8dpf_final <- subtract_blanks(MO2slopes_heatwave_8dpf_meta)
 ###Trial 6: 8 dpf ambient temp----
 df <- as_tibble(MO2_data)%>%
   filter(trial_id == 6)%>%
-  filter(run_num < 9)###Subset data if not all runs are wanted
+  filter(run_num < 9)###the last two time points appear off, illustrated especially by the blanks. Best to use the first 8 measurements only
+
+models <- df %>%
+  split(.$tank) %>%
+  map(~lm(DO_umol_L~delta_time_mins, data = .))
+run6.outliers <- models %>%
+  map(~outlierTest(.))
 
 ###Plots
 ggplot(df) +
@@ -261,7 +318,7 @@ ggplot(df) +
   labs(title="Embryo MO2 ambient temperature 8dpf", caption=paste0("Exp 3 Pacific herring heatwave x CO2 ")) +
   theme_bw()+
   xlab("Run time (mins)")+ylab("DO (umol/L)")+
-  xlim(0,120)+ylim(230,330)+
+  xlim(0,160)+ylim(230,330)+
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=24,face="bold"),
         plot.title=element_text(size=28,face="bold"),
@@ -303,6 +360,10 @@ all_MO2 <- rbind(MO2slopes_heatwave_6dpf_final,MO2slopes_ambienttemp_6dpf_final,
                  MO2slopes_ambienttemp_7dpf_final,MO2slopes_heatwave_8dpf_final,MO2slopes_ambienttemp_8dpf_final)
 all_MO2 <- all_MO2 %>%
   unite(treatment, temp_treatment, pCO2, remove = FALSE)
+
+###Quality controlfor embryo MO2 measurements using  coefficient of determination (R^2 > 0.95)
+poorfits <- filter(all_regression_fits, r.squared < .95 & num_embryos > 1)
+
   
 
 ###Change sign and rename MO2rate_umol_hr_indv to simply MO2
@@ -343,6 +404,7 @@ MO2_7dpf <- all_MO2 %>%
 
 model_7dpf <- lm(MO2_SA~pCO2*temp_treatment, data = MO2_7dpf); anova(model_7dpf)
 check_model(model_7dpf)
+
 
 ###Plot
 ggplot(MO2_7dpf) +

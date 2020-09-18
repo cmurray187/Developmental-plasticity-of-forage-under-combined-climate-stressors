@@ -59,7 +59,10 @@ df1.pivot <- pivot_longer(df1, # dataframe to be pivoted
                                     cols = 10:18, # column names to be stored as a SINGLE variable
                                     names_to = "trait", # name of that new variable (column)
                                     values_to = "values") # name of new variable (column) storing all the values (data)
-df1.pivot$trait <- factor(df1.pivot$trait, levels = c("SL","SBA","HW","EW","PYBD", "PVBD","YSA","DW","YSAbySBA"), labels = c("Standard length (mm)", "Somatic body area (mm^2)", "Head width (mm)", "Eye width (mm)", "Post-yolk body depth (mm)", "Post-vent body depth (mm)", "Yolk sac area (mm^2)", "Dry weight (mg)", "Yolk sac area/somatic body area ratio" ))
+df1.pivot$trait <- factor(df1.pivot$trait, levels = c("SL","SBA","HW","EW","PYBD", "PVBD","YSA","DW","YSAbySBA"), 
+                          labels = c("Standard length (mm)", "Somatic body area (mm^2)", "Head width (mm)", "Eye width (mm)", 
+                                     "Post-yolk body depth (mm)", "Post-vent body depth (mm)", "Yolk sac area (mm^2)", 
+                                     "Dry weight (mg)", "Yolk sac area/somatic body area ratio" ))
 
 p <- ggplot(df1.pivot) +
   aes(x=group, y=values, color = group) + # you could interactively 'paint' different covariates onto this plot using the 'fill' aes
@@ -227,13 +230,14 @@ leveneTest(resid(lmePC1_out)~morphoPCAdata_PC1out$CO2*morphoPCAdata_PC1out$temp*
 ###Final model for PC1
 VItank <- varIdent(form = ~1|tank)
 lmePC1_vi <- lme(fixed = PC1~CO2*temp, data = morphoPCAdata_PC1out, random = ~1|tank, weights = VItank)
-summary(lmePC1_vi)
+anova(lmePC1_vi)
+summary(mePC1_vi)
 emPC1= emmeans(lmePC1_vi,pairwise~CO2*temp); emPC1
 ##
 qqnorm(resid(lmePC1_vi)); qqline(resid(lmePC1_vi)); shapiro.test(resid(lmePC1_vi))
 #Passes normality
 plot(lmePC1_vi)
-leveneTest(resid(lmePC1_vi)~morphoPCAdata_PC1out$CO2*morphoPCAdata_PC1out$temp*morphoPCAdata_PC1out$tank)
+leveneTest(resid(summary(lmePC1_vi_ranslope))~morphoPCAdata_PC1out$CO2*morphoPCAdata_PC1out$temp*morphoPCAdata_PC1out$tank)
 #Fails Levene's test, but standardized residuals vs. fitted values looks much better than before, 
 #and good enough to proceed with this model. I don't think further attempts to remove influential points or standardize the fit will improve the model. 
 
@@ -241,14 +245,17 @@ leveneTest(resid(lmePC1_vi)~morphoPCAdata_PC1out$CO2*morphoPCAdata_PC1out$temp*m
 PC1fits <- fitted(lmePC1_vi)
 ggplot(morphoPCAdata_PC1out)+
   geom_point(aes(x = group, y = PC1, color = group), position = position_jitterdodge(dodge.width = 0.07), size = 2)+
-  geom_point(aes(x = group , y = PC1fits, color = group),color = "black", size = 8, position = position_jitterdodge(dodge.width = 0.07) )+
+  geom_point(aes(x = group , y = PC1fits, color = group),color = "black", size = 8 )+
   geom_point(aes(x = group , y = PC1fits, color = group), size = 6) +
   theme_bw()
 
 
 ###PC2 analysis----
 lmePC2 <- lme(fixed = PC2~CO2*temp, data = morphoPCAdata, random = ~1|tank)
+lmePC2_ranslope <- lme(fixed = PC2~CO2*temp, data = morphoPCAdata, random = list(tank = pdDiag(~CO2*temp-1)))
+anova(lmePC2,lmePC2_ranslope)
 summary(lmePC2)
+summary(lmePC2_ranslope)
 #High CO2 larvae had significantly higher PC2 scores (larger yolks and heavier at hatch)
 qqnorm(resid(lmePC2)); qqline(resid(lmePC2)); shapiro.test(resid(lmePC2))
 #Passes normality
